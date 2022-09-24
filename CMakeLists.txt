@@ -32,22 +32,6 @@ include(GNUInstallDirs)
 set(INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_INCLUDEDIR}/Coin)
 set(INSTALL_CMAKE_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 
-if(MSVC)
-  set(
-    CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} /bigobj /MP /wd4996 /wd4819 /wd4251 /wd4267 /wd4244 /wd4275"
-    )
-endif()
-
-if(APPLE)
-  set(
-    CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} -Wno-inconsistent-missing-override -Wno-unused-command-line-argument -Wno-unused-result -Wno-exceptions"
-    )
-  set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9"
-      CACHE STRING "Minimum OS X deployment version")
-endif()
-
 find_package(CoinUtils REQUIRED)
 find_package(Mosek)
 
@@ -88,11 +72,27 @@ set(OSI_HEADERS
 
 add_library(${PROJECT_NAME} ${OSI_SOURCES})
 
-target_include_directories(${PROJECT_NAME} PUBLIC $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/Osi>)
+set(MSVC_OPTIONS /bigobj /MP /wd4996 /wd4819 /wd4251 /wd4267 /wd4244 /wd4275)
+set(APPLE_OPTIONS
+    -Wno-inconsistent-missing-override
+    -Wno-unused-command-line-argument
+    -Wno-unused-result
+    -Wno-exceptions
+)
 
 if(MSVC)
-  target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
+    target_compile_options(${PROJECT_NAME} PRIVATE ${MSVC_OPTIONS})
+    target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()
+
+if(APPLE)
+    target_compile_options(${PROJECT_NAME} PRIVATE ${APPLE_OPTIONS})
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9"
+        CACHE STRING "Minimum OS X deployment version")
+endif()
+
+target_include_directories(${PROJECT_NAME} PUBLIC $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/Osi>)
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_CMATH)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Coin::CoinUtils)
@@ -113,11 +113,17 @@ if (${MOSEK_FOUND})
 
     add_library(OsiMsk ${OSIMSK_SOURCES})
 
-    target_include_directories(OsiMsk PUBLIC $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/OsiMsk> ${MOSEK_INCLUDE})
-
     if(MSVC)
+        target_compile_options(OsiMsk PRIVATE ${MSVC_OPTIONS})
         target_compile_definitions(OsiMsk PRIVATE _CRT_SECURE_NO_WARNINGS)
     endif()
+
+    if(APPLE)
+        target_compile_options(OsiMsk PRIVATE ${APPLE_OPTIONS})
+    endif()
+
+    target_include_directories(OsiMsk PUBLIC $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/OsiMsk> ${MOSEK_INCLUDE})
+
     target_compile_definitions(OsiMsk PRIVATE HAVE_CMATH)
 
     target_link_libraries(OsiMsk PRIVATE Coin::CoinUtils ${MOSEK_LIB})
