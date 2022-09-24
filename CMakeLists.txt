@@ -85,7 +85,27 @@ install(DIRECTORY src/Osi/
         PATTERN "*.hpp"
         PATTERN "config_default.h" EXCLUDE)
 
-install(TARGETS ${PROJECT_NAME}
+file(GLOB OSIMSK_SOURCES src/OsiMsk/*.hpp src/OsiMsk/*.cpp)
+
+add_library(OsiMsk ${OSIMSK_SOURCES})
+add_library(Coin::OsiMsk ALIAS OsiMsk)
+
+target_include_directories(OsiMsk PUBLIC $<INSTALL_INTERFACE:${RELATIVE_INSTALL_INCLUDE_DIR}> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/OsiMsk>)
+
+if(MSVC)
+    target_compile_definitions(OsiMsk PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
+target_compile_definitions(OsiMsk PRIVATE HAVE_CMATH)
+
+target_link_libraries(OsiMsk PRIVATE Coin::CoinUtils)
+
+install(DIRECTORY src/OsiMsk/
+        DESTINATION ${INSTALL_INCLUDE_DIR}
+        FILES_MATCHING
+        PATTERN "*.h"
+        PATTERN "*.hpp")
+
+install(TARGETS ${PROJECT_NAME} OsiMsk
         EXPORT "${PROJECT_NAME}Targets"
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
