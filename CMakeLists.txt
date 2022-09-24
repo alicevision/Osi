@@ -51,7 +51,40 @@ endif()
 find_package(CoinUtils REQUIRED)
 find_package(Mosek)
 
-file(GLOB OSI_SOURCES src/Osi/*.hpp src/Osi/*.cpp)
+set(OSI_SOURCES
+    src/Osi/OsiAuxInfo.cpp
+    src/Osi/OsiBranchingObject.cpp
+    src/Osi/OsiChooseVariable.cpp
+    src/Osi/OsiColCut.cpp
+    src/Osi/OsiCut.cpp
+    src/Osi/OsiCuts.cpp
+    src/Osi/OsiFeatures.cpp
+    src/Osi/OsiNames.cpp
+    src/Osi/OsiPresolve.cpp
+    src/Osi/OsiRowCut.cpp
+    src/Osi/OsiRowCutDebugger.cpp
+    src/Osi/OsiSolverBranch.cpp
+    src/Osi/OsiSolverInterface.cpp
+)
+
+set(OSI_HEADERS
+    src/Osi/config_osi_default.h
+    src/Osi/OsiAuxInfo.hpp
+    src/Osi/OsiBranchingObject.hpp
+    src/Osi/OsiChooseVariable.hpp
+    src/Osi/OsiColCut.hpp
+    src/Osi/OsiCollections.hpp
+    src/Osi/OsiConfig.h
+    src/Osi/OsiCut.hpp
+    src/Osi/OsiCuts.hpp
+    src/Osi/OsiFeatures.hpp
+    src/Osi/OsiPresolve.hpp
+    src/Osi/OsiRowCutDebugger.hpp
+    src/Osi/OsiRowCut.hpp
+    src/Osi/OsiSolverBranch.hpp
+    src/Osi/OsiSolverInterface.hpp
+    src/Osi/OsiSolverParameters.hpp
+)
 
 add_library(${PROJECT_NAME} ${OSI_SOURCES})
 
@@ -64,20 +97,21 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_CMATH)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Coin::CoinUtils)
 
-install(DIRECTORY src/Osi/
-        DESTINATION ${INSTALL_INCLUDE_DIR}
-        FILES_MATCHING
-        PATTERN "*.h"
-        PATTERN "*.hpp"
-        PATTERN "config_default.h" EXCLUDE)
+install(FILES ${OSI_HEADERS} DESTINATION ${INSTALL_INCLUDE_DIR})
 
 set(INSTALL_TARGETS ${PROJECT_NAME})
 
 if (${MOSEK_FOUND})
-    file(GLOB OSIMSK_SOURCES src/OsiMsk/*.hpp src/OsiMsk/*.cpp)
+    set(OSIMSK_SOURCES
+        src/OsiMsk/OsiMskSolverInterface.cpp
+    )
+
+    set(OSIMSK_HEADERS
+        src/OsiMsk/OsiMskSolverInterface.hpp
+        src/OsiMsk/OsiMskConfig.h
+    )
 
     add_library(OsiMsk ${OSIMSK_SOURCES})
-    add_library(Coin::OsiMsk ALIAS OsiMsk)
 
     target_include_directories(OsiMsk PUBLIC $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/OsiMsk> ${MOSEK_INCLUDE})
 
@@ -88,11 +122,7 @@ if (${MOSEK_FOUND})
 
     target_link_libraries(OsiMsk PRIVATE Coin::CoinUtils ${MOSEK_LIB})
 
-    install(DIRECTORY src/OsiMsk/
-            DESTINATION ${INSTALL_INCLUDE_DIR}
-            FILES_MATCHING
-            PATTERN "*.h"
-            PATTERN "*.hpp")
+    install(FILES ${OSIMSK_HEADERS} DESTINATION ${INSTALL_INCLUDE_DIR})
 
     list(APPEND INSTALL_TARGETS OsiMsk)
 endif()
