@@ -64,6 +64,7 @@ if(APPLE)
 endif()
 
 find_package(CoinUtils REQUIRED)
+find_package(Mosek)
 
 file(GLOB OSI_SOURCES src/Osi/*.hpp src/Osi/*.cpp)
 
@@ -85,27 +86,33 @@ install(DIRECTORY src/Osi/
         PATTERN "*.hpp"
         PATTERN "config_default.h" EXCLUDE)
 
-file(GLOB OSIMSK_SOURCES src/OsiMsk/*.hpp src/OsiMsk/*.cpp)
+set(INSTALL_TARGETS ${PROJECT_NAME})
 
-add_library(OsiMsk ${OSIMSK_SOURCES})
-add_library(Coin::OsiMsk ALIAS OsiMsk)
+if (${MOSEK_FOUND})
+    file(GLOB OSIMSK_SOURCES src/OsiMsk/*.hpp src/OsiMsk/*.cpp)
 
-target_include_directories(OsiMsk PUBLIC $<INSTALL_INTERFACE:${RELATIVE_INSTALL_INCLUDE_DIR}> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/OsiMsk>)
+    add_library(OsiMsk ${OSIMSK_SOURCES})
+    add_library(Coin::OsiMsk ALIAS OsiMsk)
 
-if(MSVC)
-    target_compile_definitions(OsiMsk PRIVATE _CRT_SECURE_NO_WARNINGS)
+    target_include_directories(OsiMsk PUBLIC $<INSTALL_INTERFACE:${RELATIVE_INSTALL_INCLUDE_DIR}> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/OsiMsk> ${MOSEK_INCLUDE})
+
+    if(MSVC)
+        target_compile_definitions(OsiMsk PRIVATE _CRT_SECURE_NO_WARNINGS)
+    endif()
+    target_compile_definitions(OsiMsk PRIVATE HAVE_CMATH)
+
+    target_link_libraries(OsiMsk PRIVATE Coin::CoinUtils ${MOSEK_LIB})
+
+    install(DIRECTORY src/OsiMsk/
+            DESTINATION ${INSTALL_INCLUDE_DIR}
+            FILES_MATCHING
+            PATTERN "*.h"
+            PATTERN "*.hpp")
+
+    list(APPEND INSTALL_TARGETS OsiMsk)
 endif()
-target_compile_definitions(OsiMsk PRIVATE HAVE_CMATH)
 
-target_link_libraries(OsiMsk PRIVATE Coin::CoinUtils)
-
-install(DIRECTORY src/OsiMsk/
-        DESTINATION ${INSTALL_INCLUDE_DIR}
-        FILES_MATCHING
-        PATTERN "*.h"
-        PATTERN "*.hpp")
-
-install(TARGETS ${PROJECT_NAME} OsiMsk
+install(TARGETS ${INSTALL_TARGETS}
         EXPORT "${PROJECT_NAME}Targets"
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
