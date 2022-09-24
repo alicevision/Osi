@@ -65,11 +65,11 @@ endif()
 
 find_package(CoinUtils REQUIRED)
 
-file(GLOB OSI_SOURCES Osi/src/Osi/*.hpp Osi/src/Osi/*.cpp)
+file(GLOB OSI_SOURCES src/Osi/*.hpp src/Osi/*.cpp)
 
 add_library(${PROJECT_NAME} ${OSI_SOURCES})
 
-target_include_directories(${PROJECT_NAME} PUBLIC $<INSTALL_INTERFACE:${RELATIVE_INSTALL_INCLUDE_DIR}> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Osi/src/Osi>)
+target_include_directories(${PROJECT_NAME} PUBLIC $<INSTALL_INTERFACE:${RELATIVE_INSTALL_INCLUDE_DIR}> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/Osi>)
 
 if(MSVC)
   target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
@@ -78,7 +78,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_CMATH)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Coin::CoinUtils)
 
-install(DIRECTORY Osi/src/Osi/
+install(DIRECTORY src/Osi/
         DESTINATION ${INSTALL_INCLUDE_DIR}
         FILES_MATCHING
         PATTERN "*.h"
